@@ -1,6 +1,8 @@
 package histogram
 
 import (
+	"io"
+	"encoding/csv"
 	"fmt"
 	"runtime/metrics"
 	"strings"
@@ -127,4 +129,25 @@ func interestingBuckets(h *metrics.Float64Histogram, full bool) []bool {
 	}
 
 	return interesting
+}
+
+func CSV(h *metrics.Float64Histogram, w io.Writer) error {
+	cw := csv.NewWriter(w)
+
+	if err := cw.Write([]string{"lower", "upper", "count"}); err != nil {
+		return err
+	}
+
+	for i, count := range h.Counts {
+		lower := fmt.Sprintf("%f", h.Buckets[i] * 1e9)
+		upper := fmt.Sprintf("%f", h.Buckets[i+1] * 1e9)
+		cnt := fmt.Sprintf("%d", count)
+
+		if err := cw.Write([]string{lower, upper, cnt}); err != nil {
+			return err
+		}
+	}
+
+	cw.Flush()
+	return cw.Error()
 }

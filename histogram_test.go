@@ -1,6 +1,7 @@
 package histogram
 
 import (
+	"os"
 	"runtime/metrics"
 	"sync"
 	"testing"
@@ -58,4 +59,13 @@ func TestVisualize(t *testing.T) {
 	h := readSchedHistogram()
 	s := Visualize(h, false)
 	t.Logf(s)
+}
+
+func TestCSV(t *testing.T) {
+	doSomeSchedWork()
+
+	h := readSchedHistogram()
+	if err := CSV(h, os.Stdout); err != nil {
+		t.Errorf("CSV() got err %v want nil", err)
+	}
 }

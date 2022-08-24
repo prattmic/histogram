@@ -56,6 +56,6 @@ func TestVisualize(t *testing.T) {
 	doSomeSchedWork()
 
 	h := readSchedHistogram()
-	s := Visualize(h)
+	s := Visualize(h, false)
 	t.Logf(s)
 }

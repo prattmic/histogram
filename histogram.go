@@ -53,7 +53,10 @@ func Percentile(h *metrics.Float64Histogram, pct float64) float64 {
 // Visualize returns a rudimentary ASCII visualization. It plots buckets
 // directly, despite differing bucket sizes, so the visualization may be
 // misleading.
-func Visualize(h *metrics.Float64Histogram) string {
+//
+// If full, all buckets are shown. Otherwise the output is compressed to
+// exclude most empty buckets.
+func Visualize(h *metrics.Float64Histogram, full bool) string {
 	var b strings.Builder
 
 	var maxCount uint64
@@ -63,8 +66,17 @@ func Visualize(h *metrics.Float64Histogram) string {
 		}
 	}
 
+	shouldPrint := interestingBuckets(h, full)
+
 	const maxWidth = 20
 	for i, count := range h.Counts {
+		if !shouldPrint[i] {
+			continue
+		} else if i > 0 && !shouldPrint[i-1] {
+			// Didn't print last bucket, indicate skipped section.
+			fmt.Fprintf(&b, "%20s| ...\n", " ")
+		}
+
 		lower := h.Buckets[i] * 1e9
 		upper := h.Buckets[i+1] * 1e9
 
@@ -74,4 +86,45 @@ func Visualize(h *metrics.Float64Histogram) string {
 	}
 
 	return b.String()
+}
+
+// interestingBuckets returns a slice of bool, where each index corresponds to
+// whether that index of h.Count should be printed.
+func interestingBuckets(h *metrics.Float64Histogram, full bool) []bool {
+	interesting := make([]bool, len(h.Counts))
+	if full {
+		for i := range interesting {
+			interesting[i] = true
+		}
+		return interesting
+	}
+
+	markSurrounding := func(i int) {
+		const surround = 2 // 3 buckets around an interesting one are also interesting.
+
+		// Buckets before i.
+		for j := i-1; j >= i-surround && j >= 0; j-- {
+			interesting[j] = true
+		}
+
+		// i itself.
+		interesting[i] = true
+
+		// Buckets after i.
+		for j := i+1; j <= i+surround && j < len(interesting); j++ {
+			interesting[j] = true
+		}
+	}
+
+	// Start and end are always interesting.
+	markSurrounding(0)
+	markSurrounding(len(h.Counts)-1)
+
+	for i, count := range h.Counts {
+		if count > 0 {
+			markSurrounding(i)
+		}
+	}
+
+	return interesting
 }

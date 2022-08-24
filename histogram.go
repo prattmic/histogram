@@ -3,6 +3,7 @@ package histogram
 import (
 	"fmt"
 	"runtime/metrics"
+	"strings"
 )
 
 func Percentiles(h *metrics.Float64Histogram, pct []float64) []float64 {
@@ -33,9 +34,9 @@ func Percentiles(h *metrics.Float64Histogram, pct []float64) []float64 {
 
 		for j, p := range pct {
 			if vals[j] == maxVal && currPercent >= p {
-				lowerNanos := h.Buckets[i] * 1e9
-				upperNanos := h.Buckets[i+1] * 1e9
-				mean := (lowerNanos + upperNanos) / 2
+				lower := h.Buckets[i] * 1e9
+				upper := h.Buckets[i+1] * 1e9
+				mean := (lower + upper) / 2
 				vals[j] = mean
 			}
 		}
@@ -47,4 +48,30 @@ func Percentiles(h *metrics.Float64Histogram, pct []float64) []float64 {
 
 func Percentile(h *metrics.Float64Histogram, pct float64) float64 {
 	return Percentiles(h, []float64{pct})[0]
+}
+
+// Visualize returns a rudimentary ASCII visualization. It plots buckets
+// directly, despite differing bucket sizes, so the visualization may be
+// misleading.
+func Visualize(h *metrics.Float64Histogram) string {
+	var b strings.Builder
+
+	var maxCount uint64
+	for _, count := range h.Counts {
+		if count > maxCount {
+			maxCount = count
+		}
+	}
+
+	const maxWidth = 20
+	for i, count := range h.Counts {
+		lower := h.Buckets[i] * 1e9
+		upper := h.Buckets[i+1] * 1e9
+
+		bar := strings.Repeat("*", int(maxWidth * (float64(count) / float64(maxCount))))
+
+		fmt.Fprintf(&b, "%20s| %6d [%6.1f, %6.1f)\n", bar, count, lower, upper)
+	}
+
+	return b.String()
 }

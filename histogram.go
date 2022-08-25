@@ -93,7 +93,11 @@ func Visualize(h *metrics.Float64Histogram, full bool) string {
 		lower := h.Buckets[i] * 1e9
 		upper := h.Buckets[i+1] * 1e9
 
-		bar := strings.Repeat("*", int(maxWidth * (float64(count) / float64(maxCount))))
+		width := 0
+		if maxCount > 0 {
+			width = int(maxWidth * (float64(count) / float64(maxCount)))
+		}
+		bar := strings.Repeat("*", width)
 
 		fmt.Fprintf(&b, "%20s| %6d [%6.1f, %6.1f)\n", bar, count, lower, upper)
 	}

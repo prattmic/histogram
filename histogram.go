@@ -1,3 +1,5 @@
+// Package histogram provides helpers for working with runtime/metrics
+// histograms.
 package histogram
 
 import (

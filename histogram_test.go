@@ -53,6 +53,14 @@ func TestPercentiles(t *testing.T) {
 	t.Logf("p99: %f", v[2])
 }
 
+func TestSamples(t *testing.T) {
+	doSomeSchedWork()
+
+	h := readSchedHistogram()
+	s := Samples(h)
+	t.Logf("samples: %d", s)
+}
+
 func TestVisualize(t *testing.T) {
 	doSomeSchedWork()
 

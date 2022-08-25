@@ -52,6 +52,15 @@ func Percentile(h *metrics.Float64Histogram, pct float64) float64 {
 	return Percentiles(h, []float64{pct})[0]
 }
 
+// Samples returns the total number of samples in the histogram.
+func Samples(h *metrics.Float64Histogram) uint64 {
+	var total uint64
+	for _, count := range h.Counts {
+		total += count
+	}
+	return total
+}
+
 // Visualize returns a rudimentary ASCII visualization. It plots buckets
 // directly, despite differing bucket sizes, so the visualization may be
 // misleading.
